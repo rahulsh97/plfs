@@ -1,0 +1,7 @@
+^00-tidy-data\.r$
+^00-setup\.r$
+^data-raw$
+^data-tidy$
+^LICENSE\.md$
+^README\.Rmd$
+^README\.html$

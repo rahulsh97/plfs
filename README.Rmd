@@ -1,0 +1,54 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+# plfs
+
+The goal of plfs is to provide a long dataset of the Periodic Labour Force Survey (PLFS) from India.
+
+## Example
+
+Install the package from GitHub and load it:
+
+```{r install, eval=FALSE}
+# install.packages("devtools")
+devtools::install_github("rahulsh97/plfs")
+```
+
+```{r load}
+library(plfs)
+```
+
+Because of the datasets size, the package provides a function to download the datasets and create a local DuckDB
+database. This results in a CRAN-compliant package.
+
+Here is how to get the plfs database ready for use:
+
+```{r download, eval=FALSE}
+plfs_download()
+```
+
+TODO: Add example similar to ASI.
+
+# Adding older/newer years
+
+Be sure to use the yearly survey (e.g., Jul 23 - Jul 24)
+
+1. Install the Nesstar Explorer (e.g. plfs 2023-24 includes it)
+2. Extract the RAR files downloaded from the microdata website to data-raw/202223 or what year you are adding
+3. Export the .Nesstar file to Stata (SAV) format with "Export Datasets" and the metadata with "Export DDI" using the Nesstar Explorer
+4. Update `00-tidy-data.r` and run it
+5. Update the available datasets in `R/available_datasets.R`
+6. Update the new RDS files in the 'Releases' section of the GitHub repository
+7. Regenerate the database with `plfs_delete()` and `plfs_download()`
