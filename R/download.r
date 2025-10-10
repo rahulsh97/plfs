@@ -4,26 +4,24 @@
 #' datasets cannot be included in the package due to their size and CRAN file size limits.
 #'
 #' @param ver Which version to download. By default it is the latest version available on GitHub. You can see all
-#' versions at <https://github.com/rahulsh97/asuse/releases>.
+#' versions at <https://github.com/rahulsh97/plfs/releases>.
 #'
 #' @return NULL
 #' @export
 #'
 #' @examples
-#' \dontrun{ asuse_download() }
-asuse_download <- function(ver = NULL) {
+#' \dontrun{ plfs_download() }
+plfs_download <- function(ver = NULL) {
   duckdb_version <- utils::packageVersion("duckdb")
-  db_pattern <- paste0("v", gsub("\\.", "", duckdb_version), ".sql$")
+  db_pattern <- paste0("plfs_duckdb_v", gsub("\\.", "", duckdb_version), ".sql$")
   
-  dir <- asuse_path()
+  dir <- plfs_path()
 
   duckdb_current_files <- list.files(dir, db_pattern, full.names = T)
   
-  if (length(duckdb_current_files) > 0 && 
-      # avoid listing initial empty duckdb files
-      all(file.size(duckdb_current_files) > 5000000000)) {
+  if (length(duckdb_current_files) > 0) {
     msg("There is already a census database for your DuckDB version.")
-    msg("If you really want to download the database again, run asuse_delete() and then download it again.")
+    msg("If you really want to download the database again, run plfs_delete() and then download it again.")
     return(invisible())
   }
   
@@ -33,22 +31,23 @@ asuse_download <- function(ver = NULL) {
   
   suppressWarnings(try(dir.create(dir, recursive = TRUE)))
   
-  rfile <- get_gh_release_file("rahulsh97/asuse", tag_name = ver, dir = destdir)
+  rfile <- get_gh_release_file("rahulsh97/plfs", tag_name = ver, dir = destdir)
  
   msg("Delete old versions of the database if any...\n")
-  asuse_delete(ask = FALSE)
+  plfs_delete(ask = FALSE)
     
-  finp_rds <- list.files(destdir, full.names = TRUE, pattern = "\\.rds$")
+  finp_rds <- list.files(destdir, full.names = TRUE, pattern = "plfs.*\\.rds$")
   
   try(dir.create(dir, recursive = TRUE))
-  con <- DBI::dbConnect(duckdb::duckdb(), asuse_file_path(dir), read_only = FALSE)
 
-  for (x in seq_along(finp_rds)) { 
-    msg(sprintf("Importing %s ...", asuse::available_datasets[x]))
+  for (x in seq_along(finp_rds)) {
+    con <- DBI::dbConnect(duckdb::duckdb(), plfs_file_path(dir), read_only = FALSE)
+
+    msg(sprintf("Importing %s ...", plfs::available_datasets[x]))
     
     d <- readRDS(finp_rds[x])
 
-    ntables <-  paste0(asuse::available_datasets[x], "-", names(d$data))
+    ntables <-  paste0(plfs::available_datasets[x], "-", names(d$data))
 
     for (i in seq_along(d$data)) {
       copy <- try(DBI::dbWriteTable(con, ntables[i],
@@ -58,22 +57,17 @@ asuse_download <- function(ver = NULL) {
         DBI::dbDisconnect(con, shutdown = TRUE)
 
         # remove DB
-        asuse_delete(ask = FALSE)
-
-        # remove downloaded files
-        for (i in seq_along(finp_rds)) {
-          unlink(finp_rds[i])
-        }
+        plfs_delete(ask = FALSE)
 
         stop("It was not possible to create the table ", ntables[i], " in the database.")
       }
     }
 
+    DBI::dbDisconnect(con, shutdown = TRUE)
+
     unlink(finp_rds[x])
     invisible(gc())
   }
-
-  DBI::dbDisconnect(con, shutdown = TRUE)
 }
 
 #' Descarga los archivos tsv/shp desde GitHub

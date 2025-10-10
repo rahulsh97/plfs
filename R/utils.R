@@ -1,6 +1,6 @@
 msg <- function(..., startup = FALSE) {
   if (startup) {
-    if (!isTRUE(getOption("asuse.quiet"))) {
+    if (!isTRUE(getOption("plfs.quiet"))) {
       packageStartupMessage(text_col(...))
     }
   } else {
