@@ -6,7 +6,7 @@ library(usethis)
 
 # use_cc0_license()
 
-obs <- paste0("data-raw/", c("202122","202223","202324"))
+obs <- paste0("data-raw/", c("201819","201920","202021","202122","202223","202324"))
 
 # remove extra whitespace from list elements and from character attributes
 # e.g. $citation$prodStmt$producer[[1]] == "\n  Industrial Statistics Wing\n"
