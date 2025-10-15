@@ -1,7 +1,12 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# plfs
+<!-- badges: start -->
+
+[![R-CMD-check](https://github.com/rahulsh97/plfs/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/pachadotdev/rahulsh97/actions/workflows/R-CMD-check.yaml)
+<!-- badges: end -->
+
+# Periodic Labour Force Survey (PLFS)
 
 The goal of plfs is to provide a long dataset of the Periodic Labour
 Force Survey (PLFS) from India.
@@ -54,6 +59,14 @@ dbListTables(con)
 #>  [9] "2023-24-hhrv"  "2023-24-hhv1"  "2023-24-perrv" "2023-24-perv1"
 
 tbl(con, "2021-22-hhrv") %>%
+  count()
+#> # Source:   SQL [?? x 1]
+#> # Database: DuckDB 1.4.0 [pacha@Linux 6.12.48-1-MANJARO:R 4.5.1//home/pacha/.local/share/R/plfs/plfs_duckdb_v140.sql]
+#>        n
+#>    <dbl>
+#> 1 132376
+
+tbl(con, "2021-22-hhrv") %>%
   count(b3q4_hhrv) %>%
   mutate(
     b3q4_hhrv = case_when(
@@ -76,6 +89,37 @@ tbl(con, "2021-22-hhrv") %>%
 #> 2 scheduled caste      17566 0.133 
 #> 3 other backward class 54162 0.409 
 #> 4 other                49721 0.376
+
+# what happened from 2021 to 2022
+
+d <- tbl(con, "2021-22-hhrv") %>%
+  count(b3q4_hhrv) %>%
+  mutate(
+    b3q4_hhrv = case_when(
+      b3q4_hhrv == 1L ~ "scheduled tribe",
+      b3q4_hhrv == 2L ~ "scheduled caste",
+      b3q4_hhrv == 3L ~ "other backward class",
+      b3q4_hhrv == 9L ~ "other",
+      TRUE ~ NA_character_
+    ),
+    pct = n / sum(n)
+  ) %>%
+  left_join(
+    tbl(con, "2022-23-hhrv") %>%
+      count(b3q4_hhrv) %>%
+      mutate(
+        b3q4_hhrv = case_when(
+          b3q4_hhrv == 1L ~ "scheduled tribe",
+          b3q4_hhrv == 2L ~ "scheduled caste",
+          b3q4_hhrv == 3L ~ "other backward class",
+          b3q4_hhrv == 9L ~ "other",
+          TRUE ~ NA_character_
+        ),
+        pct = n / sum(n)
+      ),
+      by = "b3q4_hhrv"
+  ) %>%
+  collect()
 
 dbDisconnect(con, shutdown = TRUE)
 ```

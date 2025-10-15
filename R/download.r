@@ -70,8 +70,7 @@ plfs_download <- function(ver = NULL) {
   }
 }
 
-#' Descarga los archivos tsv/shp desde GitHub
-#' @noRd
+#' @keywords internal
 get_gh_release_file <- function(repo, tag_name = NULL, dir = tempdir(),
                                 overwrite = TRUE) {
   releases <- httr::GET(

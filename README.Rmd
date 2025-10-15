@@ -4,6 +4,10 @@ output: github_document
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/rahulsh97/plfs/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/pachadotdev/rahulsh97/actions/workflows/R-CMD-check.yaml)
+<!-- badges: end -->
+
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -13,7 +17,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# plfs
+# Periodic Labour Force Survey (PLFS)
 
 The goal of plfs is to provide a long dataset of the Periodic Labour Force Survey (PLFS) from India.
 
@@ -50,6 +54,9 @@ con <- dbConnect(duckdb(), plfs_file_path())
 dbListTables(con)
 
 tbl(con, "2021-22-hhrv") %>%
+  count()
+
+tbl(con, "2021-22-hhrv") %>%
   count(b3q4_hhrv) %>%
   mutate(
     b3q4_hhrv = case_when(
@@ -60,6 +67,37 @@ tbl(con, "2021-22-hhrv") %>%
       TRUE ~ NA_character_
     ),
     pct = n / sum(n)
+  ) %>%
+  collect()
+
+# what happened from 2021 to 2022
+
+d <- tbl(con, "2021-22-hhrv") %>%
+  count(b3q4_hhrv) %>%
+  mutate(
+    b3q4_hhrv = case_when(
+      b3q4_hhrv == 1L ~ "scheduled tribe",
+      b3q4_hhrv == 2L ~ "scheduled caste",
+      b3q4_hhrv == 3L ~ "other backward class",
+      b3q4_hhrv == 9L ~ "other",
+      TRUE ~ NA_character_
+    ),
+    pct = n / sum(n)
+  ) %>%
+  left_join(
+    tbl(con, "2022-23-hhrv") %>%
+      count(b3q4_hhrv) %>%
+      mutate(
+        b3q4_hhrv = case_when(
+          b3q4_hhrv == 1L ~ "scheduled tribe",
+          b3q4_hhrv == 2L ~ "scheduled caste",
+          b3q4_hhrv == 3L ~ "other backward class",
+          b3q4_hhrv == 9L ~ "other",
+          TRUE ~ NA_character_
+        ),
+        pct = n / sum(n)
+      ),
+      by = "b3q4_hhrv"
   ) %>%
   collect()
 

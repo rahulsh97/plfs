@@ -1,3 +1,4 @@
+#' @keywords internal
 plfs_path <- function() {
   sys_plfs_path <- Sys.getenv("plfs_PATH")
   sys_plfs_path <- gsub("\\\\", "/", sys_plfs_path)

@@ -1,9 +1,11 @@
 Package: plfs
-Title: What the Package Does (One Line, Title Case)
+Title: Periodic Labour Force Survey (PLFS)
 Version: 0.0.0.9000
 Authors@R: 
     person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+Description: Microdata from the Periodic Labour Force Survey (PLFS) conducted by the National
+    Sample Survey Office (NSSO), Ministry of Statistics and Programme Implementation, Government of India. Tidied
+    and organized using DuckDB for efficient querying.
 License: CC0
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
