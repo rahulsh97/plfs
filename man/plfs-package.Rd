@@ -4,9 +4,9 @@
 \name{plfs-package}
 \alias{plfs}
 \alias{plfs-package}
-\title{plfs: What the Package Does (One Line, Title Case)}
+\title{plfs: Periodic Labour Force Survey (PLFS)}
 \description{
-What the package does (one paragraph).
+Microdata from the Periodic Labour Force Survey (PLFS) conducted by the National Sample Survey Office (NSSO), Ministry of Statistics and Programme Implementation, Government of India. Tidied and organized using DuckDB for efficient querying.
 }
 \author{
 \strong{Maintainer}: First Last \email{first.last@example.com}
