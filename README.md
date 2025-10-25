@@ -124,16 +124,18 @@ d <- tbl(con, "2021-22-hhrv") %>%
 dbDisconnect(con, shutdown = TRUE)
 ```
 
-A more sophisticated example to plot a map:
+Create a map showing the average household expenditure by state:
+
+**This example was particularly challenging to implement because of the
+lack of documentation, fragmented data files, and inconsistent state
+naming conventions. The details on how to create the datasets for this
+example are in the script `region-codes/organize-codes.R`.**
 
 ``` r
 library(dplyr)
 library(duckdb)
-library(readxl)
-library(rnaturalearth)
 library(sf)
 #> Linking to GEOS 3.13.1, GDAL 3.11.3, PROJ 9.6.0; sf_use_s2() is TRUE
-library(stringr)
 library(ggplot2)
 
 con <- dbConnect(duckdb(), plfs_file_path())
@@ -145,12 +147,6 @@ dbListTables(con)
 
 # average household expenditure by state
 
-state_codes <- read_excel("District_codes_PLFS_Panel_4_202324_2024.xlsx", range = "A4:D698")
-
-state_codes <- state_codes %>%
-  select(state_name = `State Name`, state_code = `State Code`) %>%
-  distinct()
-
 mean_expenditure <- tbl(con, "2023-24-hhv1") %>%
   group_by(state_code = state_hhv1) %>%
   summarise(
@@ -160,90 +156,17 @@ mean_expenditure <- tbl(con, "2023-24-hhv1") %>%
 
 dbDisconnect(con, shutdown = TRUE)
 
-mean_expenditure <- mean_expenditure %>%
-  left_join(state_codes, by = "state_code")
+# merge data with map of India states
 
-india_states <- rnaturalearth::ne_states(country = "India", returnclass = "sf") %>%
-  select(geom_name = name, geometry) %>%
-  st_as_sf()
-
-# normalize names
-norm <- function(x) {
-  x %>%
-    toupper() %>%
-    str_replace_all("&", "AND") %>%
-    str_replace_all("&", "AND") %>%
-    str_replace_all("[^A-Z0-9]", "") %>%
-    str_squish()
-}
-
-india_states <- india_states %>%
-  mutate(name_norm = norm(geom_name))
+india_states <- readRDS("region-codes/india_states_map.rds")
 
 mean_expenditure <- mean_expenditure %>%
-  mutate(state_name_norm = norm(state_name))
-
-match_idx <- stringdist::amatch(mean_expenditure$state_name_norm,
-  india_states$name_norm, method = "jw", maxDist = 0.18)
-
-unmatched <- which(is.na(match_idx))
-
-if (length(unmatched) > 0) {
-  message("Unmatched rows in mean_expenditure (no fuzzy match found). Print them to fix manually:")
-  print(mean_expenditure[unmatched, "state_name_norm"])
-}
-#> Unmatched rows in mean_expenditure (no fuzzy match found). Print them to fix manually:
-#> # A tibble: 2 × 1
-#>   state_name_norm          
-#>   <chr>                    
-#> 1 AANDNISLANDS             
-#> 2 DAMANANDDIUANDDANDNHAVELI
-
-sort(india_states$name_norm)
-#>  [1] "ANDAMANANDNICOBAR"                 "ANDHRAPRADESH"                    
-#>  [3] "ARUNACHALPRADESH"                  "ASSAM"                            
-#>  [5] "BIHAR"                             "CHANDIGARH"                       
-#>  [7] "CHHATTISGARH"                      "DADRAANDNAGARHAVELIANDDAMANANDDIU"
-#>  [9] "DELHI"                             "GOA"                              
-#> [11] "GUJARAT"                           "HARYANA"                          
-#> [13] "HIMACHALPRADESH"                   "JAMMUANDKASHMIR"                  
-#> [15] "JHARKHAND"                         "KARNATAKA"                        
-#> [17] "KERALA"                            "LADAKH"                           
-#> [19] "LAKSHADWEEP"                       "MADHYAPRADESH"                    
-#> [21] "MAHARASHTRA"                       "MANIPUR"                          
-#> [23] "MEGHALAYA"                         "MIZORAM"                          
-#> [25] "NAGALAND"                          "ODISHA"                           
-#> [27] "PUDUCHERRY"                        "PUNJAB"                           
-#> [29] "RAJASTHAN"                         "SIKKIM"                           
-#> [31] "TAMILNADU"                         "TELANGANA"                        
-#> [33] "TRIPURA"                           "UTTARAKHAND"                      
-#> [35] "UTTARPRADESH"                      "WESTBENGAL"
-
-# DAMANANDDIUANDDANDNHAVELI -> DADRAANDNAGARHAVELIANDDAMANANDDIU
-mean_expenditure <- mean_expenditure %>%
-  mutate(
-    state_name_norm = case_when(
-      state_name_norm == "DAMANANDDIUANDDANDNHAVELI" ~
-        "DADRAANDNAGARHAVELIANDDAMANANDDIU",
-      TRUE ~ state_name_norm
-    )
-  ) %>%
-  left_join(
-    india_states,
-    by = c("state_name_norm" = "name_norm")
-  )
-
-mean_expenditure %>%
-  filter(is.na(geom_name))
-#> # A tibble: 1 × 6
-#>   state_code avg_expenditure state_name    state_name_norm geom_name
-#>   <chr>                <dbl> <chr>         <chr>           <chr>    
-#> 1 35                  18247. A & N ISLANDS AANDNISLANDS    <NA>     
-#> # ℹ 1 more variable: geometry <MULTIPOLYGON [°]>
+  left_join(india_states)
+#> Joining with `by = join_by(state_code)`
 
 ggplot(mean_expenditure) +
   geom_sf(aes(fill = avg_expenditure, geometry = geometry), colour = "grey30", size = 0.2) +
-  scale_fill_viridis_c(option = "magma", begin = 0.6, end = 1, na.value = "grey95", name = "Avg expenditure") +
+  scale_fill_viridis_c(option = "D", begin = 0.5, end = 0.8, na.value = "grey95", name = "Avg expenditure") +
   labs(title = "Mean household expenditure by state (PLFS)") +
   theme_minimal() +
   theme(
@@ -255,7 +178,7 @@ ggplot(mean_expenditure) +
   )
 ```
 
-<img src="man/figures/README-avg_sector2-1.png" width="100%" />
+<img src="man/figures/README-avg_expenditure-1.png" width="100%" />
 
 # Adding older/newer years
 

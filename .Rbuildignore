@@ -6,5 +6,4 @@
 ^README\.Rmd$
 ^README\.html$
 ^\.github$
-^District_codes_PLFS_Panel_4_202324_2024\.xlsx$
-^Data_LayoutPLFS_2023-24\.xlsx$
+^region-codes$
