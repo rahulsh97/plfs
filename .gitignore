@@ -1,0 +1,19 @@
+# local PLFS DuckDB database created by plfs_download() / plfs_file_path()
+plfs_duckdb_v*.sql
+
+# raw microdata staged locally when adding a new survey year (see README)
+data-raw/
+
+# R session and project files
+.Rhistory
+.RData
+.Rproj.user/
+*.Rproj
+
+# package build artifacts
+/*.Rcheck/
+*.tar.gz
+
+# OS
+.DS_Store
+Thumbs.db

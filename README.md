@@ -1,70 +1,103 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
+<!-- After editing, regenerate README.md with devtools::build_readme() -->
 
 <!-- badges: start -->
 
-[![R-CMD-check](https://github.com/rahulsh97/plfs/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/pachadotdev/rahulsh97/actions/workflows/R-CMD-check.yaml)
+[![R-CMD-check](https://github.com/rahulsh97/plfs/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/rahulsh97/plfs/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-# Periodic Labour Force Survey (PLFS)
+# plfs
 
-The goal of plfs is to provide a long dataset of the Periodic Labour
-Force Survey (PLFS) from India.
+plfs is an R package that turns India’s Periodic Labour Force Survey
+(PLFS) microdata into a single, tidy, queryable database, so you do
+not have to clean and merge six years of survey files yourself before
+you can start analysing them.
 
-## Example
+## Who this is for
 
-Install the package from GitHub and load it:
+Researchers, students, and analysts working in R who need PLFS
+household- or person-level data from 2018-19 through 2023-24 joined
+into one place and queryable with ordinary dplyr or SQL code.
+
+## What data this supports
+
+The package currently covers the PLFS survey years listed in
+`available_datasets`: 2018-19, 2019-20, 2020-21, 2021-22, 2022-23, and
+2023-24. Each year’s household and person-level files (visiting and
+revisit schedules) are included once added to the underlying
+database.
+
+## What the package does and does not download or redistribute
+
+- The package itself ships **no PLFS microdata**. It ships only R
+  code, the list of available survey years, and a small amount of
+  public reference material (Indian state boundaries, and the
+  official PLFS data-layout and district-code workbooks in
+  `region-codes/`) used to work with the data once you have it.
+- `plfs_download()` fetches a maintainer-prepared, tidied DuckDB
+  database from this repository’s [GitHub
+  Releases](https://github.com/rahulsh97/plfs/releases) and stores it
+  on your own machine, under your R user data directory by default, or
+  under the `plfs_PATH` environment variable if you set one. Nothing
+  you do with the package uploads data anywhere.
+- The underlying PLFS microdata is published by the Ministry of
+  Statistics and Programme Implementation (MoSPI) through the
+  [microdata.gov.in](https://microdata.gov.in/NADA/index.php/catalog/PLFS)
+  portal. Review MoSPI’s own terms of use before publishing or
+  redistributing derived work, particularly if you extend this package
+  with additional survey years.
+- No function in this package requires a login, API key, or other
+  credential.
+
+## Installation
 
 ``` r
-# install.packages("devtools")
-devtools::install_github("rahulsh97/plfs")
+# install.packages("pak")
+pak::pak("rahulsh97/plfs")
 ```
+
+## Quick start
 
 ``` r
 library(plfs)
-```
 
-Because of the datasets size, the package provides a function to
-download the datasets and create a local DuckDB database. This results
-in a CRAN-compliant package.
+# survey years currently available
+available_datasets
 
-Here is how to get the plfs database ready for use:
-
-``` r
+# download the tidied database (one-time; the file is large, so this is
+# not run automatically when this README is built)
 plfs_download()
+
+# path to your local copy of the database
+plfs_file_path()
 ```
 
-Check the proportion of observations by Social Group (b3q4_hhv1) in the
-survey (See
-<https://microdata.gov.in/NADA/index.php/catalog/213/data-dictionary/F5>):
+## Principal functions
+
+| Function | What it does |
+|----|----|
+| `available_datasets` | Character vector of the PLFS survey years currently included in the database (see “What data this supports”). |
+| `plfs_download(ver = NULL)` | Downloads the tidied DuckDB database from this repository’s GitHub Releases and stores it locally. Skips the download if a matching local copy already exists for your installed DuckDB version. |
+| `plfs_file_path(dir = ...)` | Returns the local file path to the DuckDB database, without connecting to it. |
+| `plfs_delete(ask = TRUE)` | Deletes the local database directory. Prompts for confirmation unless `ask = FALSE`. |
+
+## Example: querying the database
+
+Once `plfs_download()` has run, the database is a normal DuckDB file
+you can query with `DBI` or `dplyr`. This example checks the
+proportion of observations by social group (`b3q4_hhrv`) in the survey
+(see the [NADA data
+dictionary](https://microdata.gov.in/NADA/index.php/catalog/213/data-dictionary/F5)
+for variable codes):
 
 ``` r
 library(dplyr)
-#> 
-#> Attaching package: 'dplyr'
-#> The following objects are masked from 'package:stats':
-#> 
-#>     filter, lag
-#> The following objects are masked from 'package:base':
-#> 
-#>     intersect, setdiff, setequal, union
 library(duckdb)
-#> Loading required package: DBI
 
 con <- dbConnect(duckdb(), plfs_file_path())
 
 dbListTables(con)
-#>  [1] "2021-22-hhrv"  "2021-22-hhv1"  "2021-22-perrv" "2021-22-perv1"
-#>  [5] "2022-23-hhrv"  "2022-23-hhv1"  "2022-23-perrv" "2022-23-perv1"
-#>  [9] "2023-24-hhrv"  "2023-24-hhv1"  "2023-24-perrv" "2023-24-perv1"
-
-tbl(con, "2021-22-hhrv") %>%
-  count()
-#> # Source:   SQL [?? x 1]
-#> # Database: DuckDB 1.4.0 [pacha@Linux 6.12.48-1-MANJARO:R 4.5.1//home/pacha/.local/share/R/plfs/plfs_duckdb_v140.sql]
-#>        n
-#>    <dbl>
-#> 1 132376
 
 tbl(con, "2021-22-hhrv") %>%
   count(b3q4_hhrv) %>%
@@ -79,120 +112,55 @@ tbl(con, "2021-22-hhrv") %>%
     pct = n / sum(n)
   ) %>%
   collect()
-#> Warning: Missing values are always removed in SQL aggregation functions.
-#> Use `na.rm = TRUE` to silence this warning
-#> This warning is displayed once every 8 hours.
-#> # A tibble: 4 × 3
-#>   b3q4_hhrv                n    pct
-#>   <chr>                <dbl>  <dbl>
-#> 1 scheduled tribe      10927 0.0825
-#> 2 scheduled caste      17566 0.133 
-#> 3 other backward class 54162 0.409 
-#> 4 other                49721 0.376
-
-# what happened from 2021 to 2022
-
-d <- tbl(con, "2021-22-hhrv") %>%
-  count(b3q4_hhrv) %>%
-  mutate(
-    b3q4_hhrv = case_when(
-      b3q4_hhrv == 1L ~ "scheduled tribe",
-      b3q4_hhrv == 2L ~ "scheduled caste",
-      b3q4_hhrv == 3L ~ "other backward class",
-      b3q4_hhrv == 9L ~ "other",
-      TRUE ~ NA_character_
-    ),
-    pct = n / sum(n)
-  ) %>%
-  left_join(
-    tbl(con, "2022-23-hhrv") %>%
-      count(b3q4_hhrv) %>%
-      mutate(
-        b3q4_hhrv = case_when(
-          b3q4_hhrv == 1L ~ "scheduled tribe",
-          b3q4_hhrv == 2L ~ "scheduled caste",
-          b3q4_hhrv == 3L ~ "other backward class",
-          b3q4_hhrv == 9L ~ "other",
-          TRUE ~ NA_character_
-        ),
-        pct = n / sum(n)
-      ),
-      by = "b3q4_hhrv"
-  ) %>%
-  collect()
 
 dbDisconnect(con, shutdown = TRUE)
 ```
 
-Create a map showing the average household expenditure by state:
+A second, more involved example, mapping average household expenditure
+by state, is kept in `region-codes/organize-codes.R`. That script
+documents how the state-boundary and district-code reference files in
+`region-codes/` were built; the process was non-trivial because of
+inconsistent state naming across PLFS survey years.
 
-**This example was particularly challenging to implement because of the
-lack of documentation, fragmented data files, and inconsistent state
-naming conventions. The details on how to create the datasets for this
-example are in the script `region-codes/organize-codes.R`.**
+## Adding older or newer years
 
-``` r
-library(dplyr)
-library(duckdb)
-library(sf)
-#> Linking to GEOS 3.13.1, GDAL 3.11.3, PROJ 9.6.0; sf_use_s2() is TRUE
-library(ggplot2)
+Be sure to use the yearly survey (for example, Jul 23 to Jun 24, see
+the [PLFS
+catalogue](https://microdata.gov.in/NADA/index.php/catalog/PLFS/?page=1&sort_order=desc&ps=15&repo=PLFS)):
 
-con <- dbConnect(duckdb(), plfs_file_path())
-
-dbListTables(con)
-#>  [1] "2021-22-hhrv"  "2021-22-hhv1"  "2021-22-perrv" "2021-22-perv1"
-#>  [5] "2022-23-hhrv"  "2022-23-hhv1"  "2022-23-perrv" "2022-23-perv1"
-#>  [9] "2023-24-hhrv"  "2023-24-hhv1"  "2023-24-perrv" "2023-24-perv1"
-
-# average household expenditure by state
-
-mean_expenditure <- tbl(con, "2023-24-hhv1") %>%
-  group_by(state_code = state_hhv1) %>%
-  summarise(
-    avg_expenditure = mean(b3q5pt1_hhv1, na.rm = TRUE)
-  ) %>%
-  collect()
-
-dbDisconnect(con, shutdown = TRUE)
-
-# merge data with map of India states
-
-india_states <- readRDS("region-codes/india_states_map.rds")
-
-mean_expenditure <- mean_expenditure %>%
-  left_join(india_states)
-#> Joining with `by = join_by(state_code)`
-
-ggplot(mean_expenditure) +
-  geom_sf(aes(fill = avg_expenditure, geometry = geometry), colour = "grey30", size = 0.2) +
-  scale_fill_viridis_c(option = "D", begin = 0.5, end = 0.8, na.value = "grey95", name = "Avg expenditure") +
-  labs(title = "Mean household expenditure by state (PLFS)") +
-  theme_minimal() +
-  theme(
-    axis.text = element_blank(),
-    axis.ticks = element_blank(),
-    panel.grid = element_blank(),
-    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
-    legend.position = "top"
-  )
-```
-
-<img src="man/figures/README-avg_expenditure-1.png" width="100%" />
-
-# Adding older/newer years
-
-Be sure to use the yearly survey (e.g., Jul 23 - Jun 24,
-<https://microdata.gov.in/NADA/index.php/catalog/PLFS/?page=1&sort_order=desc&ps=15&repo=PLFS>)
-
-1.  Install the Nesstar Explorer (e.g. plfs 2023-24 includes it)
+1.  Install the Nesstar Explorer (the PLFS 2023-24 release includes
+    it).
 2.  Extract the RAR/ZIP files downloaded from the microdata website to
-    data-raw/202324 or what year you are adding
-3.  Export the .Nesstar file to Stata (SAV) format with “Export
-    Datasets” and the metadata with “Export DDI” using the Nesstar
-    Explorer
-4.  Update `00-tidy-data.r` and run it
-5.  Update the available datasets in `R/available_datasets.R`
-6.  Update the new RDS files in the ‘Releases’ section of the GitHub
-    repository
-7.  Regenerate the database with `plfs_delete()` and `plfs_download()`
+    `data-raw/202324`, or whichever year you are adding.
+3.  Export the `.Nesstar` file to Stata (SAV) format with “Export
+    Datasets”, and the metadata with “Export DDI”, using the Nesstar
+    Explorer.
+4.  Update `00-tidy-data.r` and run it.
+5.  Update the available datasets in `R/available_datasets.R`.
+6.  Upload the new RDS files to the “Releases” section of the GitHub
+    repository.
+7.  Regenerate the local database with `plfs_delete()` and
+    `plfs_download()`.
+
+## Relationship to the wider India data ecosystem
+
+plfs is one of a small family of R packages that tidy major Indian
+government surveys into queryable DuckDB databases using the same
+design: [asi](https://github.com/rahulsh97/asi) (Annual Survey of
+Industries, formal manufacturing) and
+[asuse](https://github.com/rahulsh97/asuse) (Annual Survey of
+Unincorporated Sector Enterprises, informal enterprises). For an
+overview of these and other public Indian datasets used in economic
+research, see
+[india-research-stack](https://github.com/rahulsh97/india-research-stack).
+
+## Contributing and issues
+
+Bug reports and questions are welcome at
+<https://github.com/rahulsh97/plfs/issues>.
+
+## Citation and licence
+
+Code and the tidying pipeline are released under CC0 1.0 Universal;
+see [LICENSE.md](LICENSE.md). The underlying PLFS microdata remains
+subject to MoSPI’s own terms of use.

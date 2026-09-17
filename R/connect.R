@@ -13,8 +13,8 @@ plfs_path <- function() {
 #'
 #' Returns the path to the local plfs database directory.
 #'
-#' @param dir Path to the plfs directory on disk. By default this is #' "plfs" inside the user's R data directory, or the
-#' directory specified by the `plfs_DIR` environment variable if set.
+#' @param dir Path to the plfs directory on disk. By default this is "plfs" inside the user's R data directory, or the
+#' directory specified by the `plfs_PATH` environment variable if set.
 #'
 #' @export
 #'
