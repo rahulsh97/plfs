@@ -150,7 +150,26 @@ ggplot(india_states) +
 <img src="man/figures/README-india_map-1.png" width="100%" />
 
 Map geometry: SimpleMaps, used under CC BY 4.0; package-specific data
-and visualisation by Rahul Shukla.
+and visualisation by Rahul Shukla. This is a geometry preview, not a
+statistical indicator: it confirms the boundary layer loads and spans
+the full country, including the complete northern outline and the
+island territories.
+
+## Data coverage
+
+<img src="man/figures/README-data_coverage-1.png" width="100%" />
+
+This chart shows which PLFS survey years (2018-19 through 2023-24) are
+currently included in the tidied database, taken directly from the
+package’s own `available_datasets`. It is a coverage inventory, not a
+computed labour-market indicator: state-level measures such as
+labour-force participation, the worker-population ratio, or regular
+salaried earnings require the downloaded survey database via
+`plfs_download()`, and at the time of writing this repository has no
+published GitHub Release for that function to fetch. To reproduce or
+extend this chart once real data is available, adapt
+`build_data_coverage_chart.R` to compute and map a genuine state-level
+aggregate instead of a coverage inventory.
 
 ## Adding older or newer years
 
