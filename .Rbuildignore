@@ -5,3 +5,4 @@
 ^\.Rproj\.user$
 ^.*\.Rproj$
 ^build_data_coverage_chart\.R$
+^LICENSE\.md$
