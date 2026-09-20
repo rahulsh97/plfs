@@ -2,7 +2,7 @@
 % Please edit documentation in R/download.r
 \name{plfs_download}
 \alias{plfs_download}
-\title{Download the Annual Survey of Industries database from GitHub (2019-2023)}
+\title{Download the Periodic Labour Force Survey database from GitHub (2018-19 to 2023-24)}
 \usage{
 plfs_download(ver = NULL)
 }

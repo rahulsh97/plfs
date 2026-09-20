@@ -7,8 +7,8 @@
 plfs_file_path(dir = plfs_path())
 }
 \arguments{
-\item{dir}{Path to the plfs directory on disk. By default this is #' "plfs" inside the user's R data directory, or the
-directory specified by the \code{plfs_DIR} environment variable if set.}
+\item{dir}{Path to the plfs directory on disk. By default this is "plfs" inside the user's R data directory, or the
+directory specified by the \code{plfs_PATH} environment variable if set.}
 }
 \description{
 Returns the path to the local plfs database directory.
